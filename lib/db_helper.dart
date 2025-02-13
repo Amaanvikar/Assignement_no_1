@@ -67,8 +67,8 @@ class DBHelper {
       proofDocURL TEXT NOT NULL,
       siteAddress TEXT NOT NULL,
       dealerLocation TEXT NOT NULL,
-      newAddress TEXT NOT NULL
-    )
+      newAddress TEXT NOT NULL
+  )
   ''');
       },
     );
@@ -93,6 +93,6 @@ class DBHelper {
 
   Future<void> clearDatabase() async {
     final db = await database;
-    await db.delete('service_requests');
+    // await db.delete('service_requests');
   }
 }

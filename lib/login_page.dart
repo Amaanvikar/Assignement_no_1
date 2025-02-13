@@ -1,20 +1,9 @@
-import 'package:assignment/listing_page.dart';
+import 'package:assignment/fetch_data_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
-void main() {
-  runApp(MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: LoginPage(),
-    );
-  }
-}
+import 'listing_page.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -50,11 +39,7 @@ class _LoginPageState extends State<LoginPage> {
         },
       );
 
-      final response = await http.get(
-        finalUri,
-        headers: {},
-      );
-      print(jsonDecode(response.body));
+      final response = await http.get(finalUri);
 
       setState(() {
         isLoading = false;
@@ -62,6 +47,12 @@ class _LoginPageState extends State<LoginPage> {
 
       if (response.statusCode == 200) {
         var data = jsonDecode(response.body);
+        print("Login Response: $data");
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('isLoggedIn', true);
+        await prefs.setString('LoginId', loginId);
+        await prefs.setString('UniqueCode', uniqueCode);
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Login successful!')),
@@ -69,7 +60,7 @@ class _LoginPageState extends State<LoginPage> {
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => ListingPage()),
+          MaterialPageRoute(builder: (context) => fetchData()),
         );
       } else {
         setState(() {
@@ -89,12 +80,7 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-          centerTitle: true,
-          title: const Text(
-            'Login',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          )),
+      appBar: AppBar(title: const Text('Login')),
       body: Center(
         child: Card(
           elevation: 5,

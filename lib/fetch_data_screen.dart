@@ -5,12 +5,12 @@ import 'package:http/http.dart' as http;
 import 'db_helper.dart';
 import 'details_page.dart';
 
-class ListingPage extends StatefulWidget {
+class fetchData extends StatefulWidget {
   @override
-  _ListingPageState createState() => _ListingPageState();
+  _fetchDataState createState() => _fetchDataState();
 }
 
-class _ListingPageState extends State<ListingPage> {
+class _fetchDataState extends State<fetchData> {
   List<ServiceRequest> serviceRequests = [];
   final DBHelper dbHelper = DBHelper();
 
@@ -22,6 +22,8 @@ class _ListingPageState extends State<ListingPage> {
 
   Future<void> _loadData() async {
     final localData = await dbHelper.getServiceRequests();
+    print("Local Data: ${localData.length}");
+
     if (localData.isNotEmpty) {
       setState(() {
         serviceRequests = localData;
@@ -32,24 +34,29 @@ class _ListingPageState extends State<ListingPage> {
   }
 
   Future<void> fetchAndStoreData() async {
-    final response = await http.get(Uri.parse(
-        'https://epoweroluat.mahindra.com/PowerolMWS/PowerolDMS_MWS.asmx/SyncDataForEVEFSR?DealerBranchesID=536&DealerID=536&MagiecCode=SDTEST01&RoleID=28&RoleLevelID=3&LoginID=SDEMPTSD00002'));
+    try {
+      final response = await http.get(Uri.parse(
+          'https://epoweroluat.mahindra.com/PowerolMWS/PowerolDMS_MWS.asmx/SyncDataForEVEFSR?DealerBranchesID=536&DealerID=536&MagiecCode=SDTEST01&RoleID=28&RoleLevelID=3&LoginID=SDEMPTSD00002'));
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      List<ServiceRequest> fetchedRequests = (data['SyncData'] as List)
-          .map((json) => ServiceRequest.fromJson(json))
-          .toList();
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        List<ServiceRequest> fetchedRequests = (data['SyncData'] as List)
+            .map((json) => ServiceRequest.fromJson(json))
+            .toList();
 
-      for (var request in fetchedRequests) {
-        await dbHelper.insertServiceRequest(request);
+        for (var request in fetchedRequests) {
+          await dbHelper.insertServiceRequest(request);
+          print("Inserting into DB: ${request.toJson()}");
+        }
+
+        setState(() {
+          serviceRequests = fetchedRequests;
+        });
+      } else {
+        throw Exception('Failed to load data');
       }
-
-      setState(() {
-        serviceRequests = fetchedRequests;
-      });
-    } else {
-      throw Exception('Failed to load data');
+    } catch (e) {
+      print('Error fetching data: $e');
     }
   }
 
