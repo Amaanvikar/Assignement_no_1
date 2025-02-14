@@ -1,8 +1,9 @@
 import 'dart:convert';
-import 'package:assignment/models.dart';
+import 'package:assignment/models/service_request_models.dart';
+import 'package:assignment/service/api_services.dart';
+import 'package:assignment/widgets/drawer_widget.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'db_helper.dart';
+import '../models/db_helper.dart';
 import 'details_page.dart';
 
 class fetchData extends StatefulWidget {
@@ -20,50 +21,84 @@ class _fetchDataState extends State<fetchData> {
     _loadData();
   }
 
+  // Future<void> _loadData() async {
+  //   final localData = await dbHelper.getServiceRequests();
+  //   print("Local Data Count: ${localData.length}");
+
+  //   if (localData.isNotEmpty) {
+  //     setState(() {
+  //       serviceRequests = localData;
+  //     });
+  //   } else {
+  //     await fetchAndStoreData();
+  //   }
+  // }
+
   Future<void> _loadData() async {
     final localData = await dbHelper.getServiceRequests();
-    print("Local Data: ${localData.length}");
 
-    if (localData.isNotEmpty) {
-      setState(() {
-        serviceRequests = localData;
-      });
+    print("🔹 Checking Local Database Data...");
+    if (localData.isEmpty) {
+      print("No Data Found in Local Database.");
     } else {
-      await fetchAndStoreData();
+      print("Local Data Loaded Successfully.");
+      for (var item in localData) {
+        print("Loaded Item: ${item.toJson()}");
+      }
     }
+
+    setState(() {
+      serviceRequests = localData;
+    });
+
+    await fetchAndStoreData();
   }
 
   Future<void> fetchAndStoreData() async {
     try {
-      final response = await http.get(Uri.parse(
-          'https://epoweroluat.mahindra.com/PowerolMWS/PowerolDMS_MWS.asmx/SyncDataForEVEFSR?DealerBranchesID=536&DealerID=536&MagiecCode=SDTEST01&RoleID=28&RoleLevelID=3&LoginID=SDEMPTSD00002'));
+      final response = await ApiService.fetchSyncData(
+        dealerBranchesID: 536,
+        dealerID: 536,
+        magicCode: "SDTEST01",
+        roleID: 28,
+        roleLevelID: 3,
+        loginID: "SDEMPTSD00002",
+      );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        List<ServiceRequest> fetchedRequests = (data['SyncData'] as List)
-            .map((json) => ServiceRequest.fromJson(json))
-            .toList();
 
-        for (var request in fetchedRequests) {
-          await dbHelper.insertServiceRequest(request);
-          print("Inserting into DB: ${request.toJson()}");
+        if (data['SyncData'] != null) {
+          List<ServiceRequest> fetchedRequests = (data['SyncData'] as List)
+              .map((json) => ServiceRequest.fromJson(json))
+              .toList();
+
+          for (var request in fetchedRequests) {
+            await dbHelper.insertServiceRequest(request);
+            print("Inserted into DB: ${request.toJson()}");
+          }
+
+          setState(() {
+            serviceRequests = fetchedRequests;
+          });
+
+          print("Data successfully fetched and stored.");
+        } else {
+          print("No data found in API response.");
         }
-
-        setState(() {
-          serviceRequests = fetchedRequests;
-        });
       } else {
-        throw Exception('Failed to load data');
+        print("Failed to load data, Status Code: ${response.statusCode}");
       }
     } catch (e) {
-      print('Error fetching data: $e');
+      print("Error fetching data: $e");
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Service Requests")),
+      appBar: AppBar(title: const Text("Service Requests")),
+      drawer: const DrawerWidget(),
       body: serviceRequests.isEmpty
           ? Center(child: CircularProgressIndicator())
           : RefreshIndicator(
@@ -73,7 +108,7 @@ class _fetchDataState extends State<fetchData> {
                 itemBuilder: (context, index) {
                   final item = serviceRequests[index];
                   return Card(
-                    margin: EdgeInsets.all(8.0),
+                    margin: const EdgeInsets.all(8.0),
                     child: ListTile(
                       title: Text("SR No: ${item.srNumber}"),
                       subtitle: Column(

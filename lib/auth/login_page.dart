@@ -1,9 +1,8 @@
-import 'package:assignment/fetch_data_screen.dart';
+import 'package:assignment/screens/fetch_data_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'listing_page.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -74,6 +73,12 @@ class _LoginPageState extends State<LoginPage> {
         errorMessage = 'An error occurred: $e';
       });
     }
+  }
+
+  Future<void> saveUserSession(String userName, String userEmail) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('userName', userName);
+    await prefs.setString('userEmail', userEmail);
   }
 
   @override

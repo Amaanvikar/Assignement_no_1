@@ -1,8 +1,7 @@
-import 'package:assignment/fetch_data_screen.dart';
+import 'package:assignment/screens/fetch_data_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'login_page.dart';
-import 'listing_page.dart';
+import 'auth/login_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

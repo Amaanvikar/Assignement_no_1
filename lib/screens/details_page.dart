@@ -1,4 +1,4 @@
-import 'package:assignment/models.dart';
+import 'package:assignment/models/service_request_models.dart';
 import 'package:flutter/material.dart';
 
 class DetailsPage extends StatelessWidget {
