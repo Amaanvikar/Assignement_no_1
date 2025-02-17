@@ -2,97 +2,151 @@ import 'package:assignment/models/service_request_models.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
-class DBHelper {
-  static final DBHelper _instance = DBHelper._internal();
+class DatabaseService {
   static Database? _database;
+  static final DatabaseService instance = DatabaseService._init();
 
-  factory DBHelper() => _instance;
-
-  DBHelper._internal();
+  DatabaseService._init();
 
   Future<Database> get database async {
     if (_database != null) return _database!;
-    _database = await _initDB();
+    _database = await _initDB('service_requests.db');
     return _database!;
   }
 
-  Future<Database> _initDB() async {
-    String path = join(await getDatabasesPath(), 'service_requests.db');
-    return await openDatabase(
-      path,
-      version: 1,
-      onCreate: (db, version) async {
-        await db.execute('''
-        CREATE TABLE service_requests (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      bookingReferenceNo TEXT NOT NULL,
-      complaintDescription TEXT NOT NULL,
-      srNumber TEXT NOT NULL,
-      customerName TEXT NOT NULL,
-      customerType TEXT NOT NULL,
-      srId TEXT NOT NULL,
-      requestedDate TEXT NOT NULL,
-      kVA TEXT NOT NULL,
-      dealerCode TEXT NOT NULL,
-      dealerName TEXT NOT NULL,
-      stateId TEXT NOT NULL,
-      stateName TEXT NOT NULL,
-      srTypeId TEXT NOT NULL,
-      srType TEXT NOT NULL,
-      latitude TEXT,  
-      longitude TEXT, 
-      plannedStartDate TEXT NOT NULL,
-      plannedStartDate2 TEXT NOT NULL,
-      plannedStartDate3 TEXT NOT NULL,
-      custContactNo TEXT NOT NULL,
-      srStatusId TEXT NOT NULL,
-      srStatus TEXT NOT NULL,
-      srEngineerName TEXT NOT NULL,
-      dealerId TEXT NOT NULL,
-      dealerBranchesId TEXT NOT NULL,
-      verticalId TEXT NOT NULL,
-      sContactNo TEXT NOT NULL,
-      modifiedDate TEXT NOT NULL,
-      districtId TEXT NOT NULL,
-      districtName TEXT NOT NULL,
-      applicationId TEXT NOT NULL,
+  Future<Database> _initDB(String filePath) async {
+    final dbPath = await getDatabasesPath();
+    final path = join(dbPath, filePath);
+    return await openDatabase(path,
+        version: 2, onCreate: _createDB, onUpgrade: _upgradeDB);
+  }
+
+  Future<void> _createDB(Database db, int version) async {
+    await db.execute('''
+    CREATE TABLE requests (
+      bookingReferenceNo TEXT PRIMARY KEY,
+      complaintDescription TEXT,
+      srnumber TEXT,
+      customerName TEXT,
+      customerType TEXT,
+      srid TEXT,
+      requestedDate TEXT,
+      kVA TEXT,
+      dealerCode TEXT,
+      dealerName TEXT,
+      stateID TEXT,
+      stateName TEXT,
+      srTypeID TEXT,
+      srType TEXT,
+      plannedStartDate TEXT,
+      plannedStartDate2 TEXT,
+      plannedStartDate3 TEXT,
+      custContactNo TEXT,
+      srStatusID TEXT,
+      srStatus TEXT,
+      sREngineerName TEXT,
+      dealerID TEXT,
+      dealerBranchesID TEXT,
+      verticalId TEXT,
+      sContactNo TEXT,
+      modifiedDate TEXT,
+      districtID TEXT,
+      districtName TEXT,
+      applicationId TEXT,
       description TEXT,
-      isManualCall INTEGER NOT NULL,
+      isManualCall INTEGER,
       chargerSerialNo TEXT,
       chargerModel TEXT,
       parntGroup TEXT,
       loctnCd TEXT,
-      stageStatus TEXT NOT NULL,
-      overallStatus TEXT NOT NULL,
-      proofDocURL TEXT NOT NULL,
-      siteAddress TEXT NOT NULL,
-      dealerLocation TEXT NOT NULL,
-      newAddress TEXT NOT NULL
-  )
+      stageStatus TEXT,
+      overallStatus TEXT,
+      proofDocURL TEXT,
+      siteAddress TEXT,
+      vehicleModel TEXT,
+      locationLevelOfParking TEXT,
+      uniqueID TEXT,
+      vinNo TEXT,
+      adJSON TEXT,
+      surveyReportSRNumber TEXT,
+      siteValidationRequestSRNumber TEXT,
+      installationRequestSRNumber TEXT,
+      dealerLocation TEXT,
+      surveyCableSize TEXT,
+      surveyCableLength TEXT,
+      surveySrID TEXT,
+      newAddress TEXT,
+      imagePath TEXT
+    )
   ''');
-      },
-    );
+  }
+
+  Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute('ALTER TABLE requests ADD COLUMN imagePath TEXT');
+    }
   }
 
   Future<void> insertServiceRequest(ServiceRequest request) async {
     final db = await database;
-    await db.insert(
-      'service_requests',
-      request.toJson(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
+    await db.insert('requests', request.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<void> updateServiceRequest(ServiceRequest request) async {
+    final db = await database;
+    await db.update(
+      'requests',
+      request.toMap(),
+      where: 'bookingReferenceNo = ?',
+      whereArgs: [request.bookingReferenceNo],
     );
   }
 
-  Future<List<ServiceRequest>> getServiceRequests() async {
+  Future<List<ServiceRequest>> getServiceRequests(
+      [String? bookingReferenceNo]) async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query('service_requests');
+    List<Map<String, dynamic>> maps;
+
+    if (bookingReferenceNo != null) {
+      maps = await db.query(
+        'requests',
+        where: 'bookingReferenceNo = ?',
+        whereArgs: [bookingReferenceNo],
+      );
+    } else {
+      maps = await db.query('requests');
+    }
+
     return List.generate(maps.length, (i) {
-      return ServiceRequest.fromJson(maps[i]);
+      return ServiceRequest.dbFromMap(maps[i]);
     });
   }
 
-  Future<void> clearDatabase() async {
+  Future<ServiceRequest?> getServiceRequestByBookingReference(
+      String bookingReferenceNo) async {
     final db = await database;
-    // await db.delete('service_requests');
+    final List<Map<String, dynamic>> maps = await db.query(
+      'requests',
+      where: 'bookingReferenceNo = ?',
+      whereArgs: [bookingReferenceNo],
+    );
+
+    if (maps.isNotEmpty) {
+      return ServiceRequest.dbFromMap(maps.first);
+    } else {
+      return null;
+    }
+  }
+
+  Future<void> insertImagePath(
+      {required String bookingReferenceNo, required String imagePath}) async {
+    final db = await database;
+
+    await db.insert(
+      'requests',
+      {'bookingReferenceNo': bookingReferenceNo, 'imagePath': imagePath},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 }

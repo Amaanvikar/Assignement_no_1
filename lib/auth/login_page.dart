@@ -1,4 +1,5 @@
 import 'package:assignment/screens/fetch_data_screen.dart';
+import 'package:assignment/service/key_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
@@ -39,24 +40,38 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       final response = await http.get(finalUri);
-
+      print(response.toString());
       setState(() {
         isLoading = false;
       });
 
       if (response.statusCode == 200) {
-        var data = jsonDecode(response.body);
-        print("Login Response: $data");
+        final decoded_response = jsonDecode(response.body);
+        print(decoded_response);
+        Map<String, dynamic> data = decoded_response["LoginCheck"][0];
 
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setBool('isLoggedIn', true);
-        await prefs.setString('LoginId', loginId);
-        await prefs.setString('UniqueCode', uniqueCode);
+        KeyService keyService = KeyService();
+        await keyService.init();
+        final userData = {
+          "UserId": data["UserId"],
+          "LoginId": data["LoginId"],
+          "RoleID": data["RoleID"],
+          "RoleLevelID": data["RoleLevelID"],
+          "DealerID": data["DealerID"],
+          "DealerBranchID": data["DealerBranchID"],
+          "UserName": data["UserName"],
+          "EmailID": data["EmailID"],
+          "MobileNo": data["MobileNo"],
+          "DealerTypeID": data["DealerTypeID"],
+          "IsActive": data["IsActive"],
+          "DealerCode": data["DealerCode"],
+        };
 
+        await keyService.storeValue("login_data", jsonEncode(userData));
+        await keyService.storebool("isLoggedIn", true);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Login successful!')),
         );
-
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => fetchData()),

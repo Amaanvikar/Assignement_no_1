@@ -13,7 +13,7 @@ class fetchData extends StatefulWidget {
 
 class _fetchDataState extends State<fetchData> {
   List<ServiceRequest> serviceRequests = [];
-  final DBHelper dbHelper = DBHelper();
+  final DatabaseService dbHelper = DatabaseService.instance;
 
   @override
   void initState() {
@@ -21,61 +21,33 @@ class _fetchDataState extends State<fetchData> {
     _loadData();
   }
 
-  // Future<void> _loadData() async {
-  //   final localData = await dbHelper.getServiceRequests();
-  //   print("Local Data Count: ${localData.length}");
-
-  //   if (localData.isNotEmpty) {
-  //     setState(() {
-  //       serviceRequests = localData;
-  //     });
-  //   } else {
-  //     await fetchAndStoreData();
-  //   }
-  // }
-
   Future<void> _loadData() async {
     final localData = await dbHelper.getServiceRequests();
-
-    print("🔹 Checking Local Database Data...");
+    print("Checking Local Database Data...");
     if (localData.isEmpty) {
-      print("No Data Found in Local Database.");
+      await fetchAndStoreData();
     } else {
       print("Local Data Loaded Successfully.");
-      for (var item in localData) {
-        print("Loaded Item: ${item.toJson()}");
-      }
+      print(localData[0].toMap());
+      setState(() {
+        serviceRequests = localData;
+      });
     }
-
-    setState(() {
-      serviceRequests = localData;
-    });
-
-    await fetchAndStoreData();
   }
 
   Future<void> fetchAndStoreData() async {
     try {
-      final response = await ApiService.fetchSyncData(
-        dealerBranchesID: 536,
-        dealerID: 536,
-        magicCode: "SDTEST01",
-        roleID: 28,
-        roleLevelID: 3,
-        loginID: "SDEMPTSD00002",
-      );
+      final response = await ApiService.fetchSyncData();
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-
         if (data['SyncData'] != null) {
           List<ServiceRequest> fetchedRequests = (data['SyncData'] as List)
-              .map((json) => ServiceRequest.fromJson(json))
+              .map((json) => ServiceRequest.fromMap(json))
               .toList();
 
           for (var request in fetchedRequests) {
             await dbHelper.insertServiceRequest(request);
-            print("Inserted into DB: ${request.toJson()}");
           }
 
           setState(() {
@@ -110,7 +82,7 @@ class _fetchDataState extends State<fetchData> {
                   return Card(
                     margin: const EdgeInsets.all(8.0),
                     child: ListTile(
-                      title: Text("SR No: ${item.srNumber}"),
+                      title: Text("SR No: ${item.srnumber}"),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
