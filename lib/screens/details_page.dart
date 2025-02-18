@@ -1,12 +1,13 @@
 import 'dart:io';
-import 'package:assignment/models/db_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:assignment/models/db_helper.dart';
 import 'package:assignment/models/service_request_models.dart';
 
 class DetailsPage extends StatefulWidget {
   final ServiceRequest data;
-  DetailsPage({required this.data});
+  const DetailsPage({Key? key, required this.data}) : super(key: key);
 
   @override
   State<DetailsPage> createState() => _DetailsPageState();
@@ -20,7 +21,7 @@ class _DetailsPageState extends State<DetailsPage> {
   void initState() {
     super.initState();
     _loadStoredImage();
-    print(widget.data.toMap());
+    print(widget.data.toMap()); // Debugging output
   }
 
   Future<void> _loadStoredImage() async {
@@ -28,6 +29,8 @@ class _DetailsPageState extends State<DetailsPage> {
 
     final storedRequest = await databaseService
         .getServiceRequestByBookingReference(widget.data.bookingReferenceNo);
+
+    print("Fetched from DB: ${storedRequest?.imagePath}");
 
     if (storedRequest != null && storedRequest.imagePath != null) {
       setState(() {
@@ -41,13 +44,48 @@ class _DetailsPageState extends State<DetailsPage> {
       final XFile? pickedFile = await _picker.pickImage(source: source);
 
       if (pickedFile != null) {
+        String savedPath = await _saveImageToLocalStorage(pickedFile.path);
+
         setState(() {
-          _imagePath = pickedFile.path;
+          _imagePath = savedPath;
         });
+        print("Picked Image Path: $_imagePath");
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Failed to pick image: $e")),
+      );
+    }
+  }
+
+  Future<String> _saveImageToLocalStorage(String imagePath) async {
+    final Directory directory = await getApplicationDocumentsDirectory();
+
+    final DateTime now = DateTime.now();
+    final String timestamp = now.millisecondsSinceEpoch.toString();
+
+    // final String newPath =
+    //     '${directory.path}/${widget.data.bookingReferenceNo}_image.jpg';
+
+    final String newPath = '${directory.path}/$timestamp.jpg';
+
+    await File(imagePath).copy(newPath);
+    print("Image saved at: $newPath");
+    return newPath;
+  }
+
+  Future<void> _submitImage() async {
+    if (_imagePath != null) {
+      final databaseService = DatabaseService.instance;
+
+      widget.data.imagePath = _imagePath;
+      await databaseService.insertImagePath(
+        bookingReferenceNo: widget.data.bookingReferenceNo,
+        imagePath: _imagePath!,
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Image updated successfully!")),
       );
     }
   }
@@ -61,7 +99,8 @@ class _DetailsPageState extends State<DetailsPage> {
       builder: (context) {
         return Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Wrap(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
                 leading: const Icon(Icons.camera_alt, color: Colors.blue),
@@ -86,21 +125,6 @@ class _DetailsPageState extends State<DetailsPage> {
     );
   }
 
-  Future<void> _submitImage() async {
-    if (_imagePath != null) {
-      widget.data.imagePath = _imagePath;
-
-      final databaseService = DatabaseService.instance;
-      print(widget.data.toMap());
-      await databaseService.insertImagePath(
-          bookingReferenceNo: widget.data.bookingReferenceNo,
-          imagePath: _imagePath!);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Image updated successfully!")),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -122,7 +146,7 @@ class _DetailsPageState extends State<DetailsPage> {
             Text("Engineer: ${widget.data.sREngineerName}"),
             Text("Customer Contact: ${widget.data.custContactNo}"),
             const SizedBox(height: 20),
-            _imagePath != null && _imagePath != ""
+            _imagePath != null && _imagePath!.isNotEmpty
                 ? Card(
                     elevation: 4,
                     margin: const EdgeInsets.only(bottom: 16),

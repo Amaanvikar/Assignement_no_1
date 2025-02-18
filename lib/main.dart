@@ -1,3 +1,4 @@
+import 'package:assignment/pagination/screens/pagination_screen.dart';
 import 'package:assignment/screens/fetch_data_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -20,7 +21,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: isLoggedIn ? fetchData() : LoginPage(),
+      home: isLoggedIn ? PaginationScreen() : LoginPage(),
     );
   }
 }

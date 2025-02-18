@@ -143,10 +143,37 @@ class DatabaseService {
       {required String bookingReferenceNo, required String imagePath}) async {
     final db = await database;
 
-    await db.insert(
+    await db.update(
       'requests',
-      {'bookingReferenceNo': bookingReferenceNo, 'imagePath': imagePath},
-      conflictAlgorithm: ConflictAlgorithm.replace,
+      {'imagePath': imagePath},
+      where: 'bookingReferenceNo = ?',
+      whereArgs: [bookingReferenceNo],
     );
+  }
+
+  Future<void> checkStoredImages() async {
+    try {
+      final db = await database;
+      final List<Map<String, dynamic>> results = await db.query('request');
+
+      if (results.isEmpty) {
+        print("No images found in the database.");
+      } else {
+        for (var row in results) {
+          String bookingReferenceNo =
+              row['bookingReferenceNo'] ?? 'No Booking Reference';
+          String? imagePath = row['imagePath'];
+
+          if (imagePath != null && imagePath.isNotEmpty) {
+            print("Stored Data: $bookingReferenceNo - $imagePath");
+          } else {
+            print(
+                "Stored Data: $bookingReferenceNo - No image path available.");
+          }
+        }
+      }
+    } catch (e) {
+      print("Error checking stored images: $e");
+    }
   }
 }

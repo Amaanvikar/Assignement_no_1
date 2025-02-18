@@ -1,3 +1,4 @@
+import 'package:assignment/pagination/screens/pagination_screen.dart';
 import 'package:assignment/screens/fetch_data_screen.dart';
 import 'package:assignment/service/key_service.dart';
 import 'package:flutter/material.dart';
@@ -74,7 +75,7 @@ class _LoginPageState extends State<LoginPage> {
         );
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => fetchData()),
+          MaterialPageRoute(builder: (context) => const PaginationScreen()),
         );
       } else {
         setState(() {
