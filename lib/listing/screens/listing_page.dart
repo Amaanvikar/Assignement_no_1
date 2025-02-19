@@ -67,7 +67,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../auth/login_page.dart';
+import '../../auth/login_page.dart';
 
 class ListingPage extends StatefulWidget {
   @override

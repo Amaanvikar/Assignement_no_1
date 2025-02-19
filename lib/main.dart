@@ -1,5 +1,5 @@
+import 'package:assignment/auth/spalash_screen.dart';
 import 'package:assignment/pagination/screens/pagination_screen.dart';
-import 'package:assignment/screens/fetch_data_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'auth/login_page.dart';
@@ -21,7 +21,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: isLoggedIn ? PaginationScreen() : LoginPage(),
+      home: SpalashScreen(),
+      // isLoggedIn ? PaginationScreen() : LoginPage(),
     );
   }
 }

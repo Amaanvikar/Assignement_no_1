@@ -59,6 +59,7 @@ class _PaginationScreenState extends State<PaginationScreen> {
           }
 
           products.addAll(pagination.products);
+          filteredProducts = List.from(products);
           _isLoading = false;
           _currentPage++;
         });
@@ -79,12 +80,15 @@ class _PaginationScreenState extends State<PaginationScreen> {
     }
   }
 
+  // Modify the search to filter by productName, productTitle, and productId
   void _filterProducts(String query) {
     setState(() {
-      filteredProducts = products
-          .where((product) =>
-              product.productName.toLowerCase().contains(query.toLowerCase()))
-          .toList();
+      filteredProducts = products.where((product) {
+        final lowerCaseQuery = query.toLowerCase();
+        return product.productName.toLowerCase().contains(lowerCaseQuery) ||
+            product.productTitle.toLowerCase().contains(lowerCaseQuery) ||
+            product.productId.toString().contains(lowerCaseQuery);
+      }).toList();
     });
   }
 
@@ -95,11 +99,12 @@ class _PaginationScreenState extends State<PaginationScreen> {
 
     return Scaffold(
       appBar: AppBar(
-          centerTitle: true,
-          title: const Text(
-            'Pagination',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          )),
+        centerTitle: true,
+        title: const Text(
+          'Pagination',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ),
       body: Column(
         children: [
           Padding(
@@ -109,7 +114,7 @@ class _PaginationScreenState extends State<PaginationScreen> {
               onChanged: _filterProducts,
               decoration: InputDecoration(
                 labelText: 'Search Products...',
-                hintText: 'Search by name',
+                hintText: 'Search by name, title, or id',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -120,9 +125,9 @@ class _PaginationScreenState extends State<PaginationScreen> {
           Expanded(
             child: ListView.builder(
               controller: _scrollController,
-              itemCount: products.length + 1,
+              itemCount: filteredProducts.length + 1,
               itemBuilder: (context, index) {
-                if (index == products.length) {
+                if (index == filteredProducts.length) {
                   return _isLoading
                       ? const Center(child: CircularProgressIndicator())
                       : const SizedBox.shrink();
@@ -141,18 +146,25 @@ class _PaginationScreenState extends State<PaginationScreen> {
                     child: ListTile(
                       contentPadding: const EdgeInsets.all(16),
                       title: Text(
-                        products[index].productId.toString(),
+                        filteredProducts[index].productId.toString(),
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       subtitle: Column(
                         children: [
-                          Text(products[index].productTitle),
-                          Text(products[index].productName),
+                          Text(filteredProducts[index].productTitle),
+                          Text(filteredProducts[index].productName),
                         ],
                       ),
                       trailing: IconButton(
-                          icon: const Icon(Icons.arrow_forward),
-                          onPressed: () {}),
+                        icon: const Icon(Icons.arrow_forward),
+                        onPressed: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => ProductDetailPage(
+                                      product: filteredProducts[index])));
+                        },
+                      ),
                     ),
                   ),
                 );

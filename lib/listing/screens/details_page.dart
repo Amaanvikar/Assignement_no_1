@@ -21,7 +21,7 @@ class _DetailsPageState extends State<DetailsPage> {
   void initState() {
     super.initState();
     _loadStoredImage();
-    print(widget.data.toMap()); // Debugging output
+    print(widget.data.toMap());
   }
 
   Future<void> _loadStoredImage() async {
