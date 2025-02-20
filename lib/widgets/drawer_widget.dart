@@ -1,4 +1,5 @@
 import 'package:assignment/auth/login_page.dart';
+import 'package:assignment/listing/screens/map_screen.dart';
 import 'package:assignment/models/service_request_models.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -49,6 +50,15 @@ class _DrawerWidgetState extends State<DrawerWidget> {
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             accountEmail: const Text("user@example.com"),
+          ),
+          ListTile(
+            title: Text(
+              'Location',
+            ),
+            onTap: () {
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => MapScreen()));
+            },
           ),
           const Spacer(),
           ListTile(

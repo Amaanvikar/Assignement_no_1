@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:assignment/auth/login_page.dart';
+import 'package:assignment/listing/screens/fetch_data_screen.dart';
 import 'package:assignment/pagination/screens/pagination_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -24,8 +25,7 @@ class _SpalashScreenState extends State<SpalashScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-            builder: (context) =>
-                isLoggedIn ? PaginationScreen() : LoginPage()),
+            builder: (context) => isLoggedIn ? fetchData() : LoginPage()),
       );
     });
   }
@@ -41,7 +41,7 @@ class _SpalashScreenState extends State<SpalashScreen> {
       if (isLoggedIn) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const PaginationScreen()),
+          MaterialPageRoute(builder: (context) => fetchData()),
         );
       } else {
         Navigator.pushReplacement(
