@@ -10,22 +10,11 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  late GoogleMapController _mapController;
+  GoogleMapController? _mapController;
   final Location _location = Location();
-
   LatLng? _currentLatLng;
-  LocationData? _currentLocation;
-
-  final List<LatLng> predefinedLocations = [
-    LatLng(9.9975, 73.7898),
-    LatLng(19.0760, 72.8777),
-    LatLng(12.9716, 77.5946),
-  ];
-
-  List<Marker> _markers = [];
-  Set<Circle> _circles = {};
-  Set<Polyline> _polylines = {};
   List<LatLng> _polylineCoordinates = [];
+  Set<Polyline> _polylines = {};
 
   @override
   void initState() {
@@ -33,6 +22,7 @@ class _MapScreenState extends State<MapScreen> {
     _getCurrentLocation();
   }
 
+  /// Request location permission and start tracking
   Future<void> _getCurrentLocation() async {
     var locationPermission = await _location.hasPermission();
     if (locationPermission == PermissionStatus.denied) {
@@ -40,34 +30,46 @@ class _MapScreenState extends State<MapScreen> {
     }
 
     if (locationPermission == PermissionStatus.granted) {
-      _currentLocation = await _location.getLocation();
-      _updatePosition(_currentLocation!);
+      LocationData? initialLocation = await _location.getLocation();
+      if (initialLocation.latitude != null &&
+          initialLocation.longitude != null) {
+        _startTracking(
+            LatLng(initialLocation.latitude!, initialLocation.longitude!));
+      }
 
       _location.onLocationChanged.listen((LocationData newLocation) {
-        _updatePosition(newLocation);
+        if (newLocation.latitude != null && newLocation.longitude != null) {
+          _updatePosition(
+              LatLng(newLocation.latitude!, newLocation.longitude!));
+        }
       });
     } else {
       print("Location permission denied");
     }
   }
 
-  void _updatePosition(LocationData locationData) {
-    if (locationData.latitude != null && locationData.longitude != null) {
-      LatLng newLatLng =
-          LatLng(locationData.latitude!, locationData.longitude!);
+  /// Initialize the starting position
+  void _startTracking(LatLng startPosition) {
+    setState(() {
+      _currentLatLng = startPosition;
+      _polylineCoordinates.add(startPosition);
+    });
+  }
 
-      setState(() {
-        _currentLatLng = newLatLng;
-        _polylineCoordinates.add(newLatLng);
-        _updatePolylines();
-      });
+  /// Updates the route polyline as the user moves
+  void _updatePosition(LatLng newLatLng) {
+    setState(() {
+      _currentLatLng = newLatLng;
+      _polylineCoordinates.add(newLatLng);
+      _updatePolylines();
+    });
 
-      if (_mapController != null) {
-        _mapController.animateCamera(CameraUpdate.newLatLng(_currentLatLng!));
-      }
+    if (_mapController != null) {
+      _mapController!.animateCamera(CameraUpdate.newLatLng(_currentLatLng!));
     }
   }
 
+  /// Generates polylines for tracking movement
   void _updatePolylines() {
     setState(() {
       _polylines.clear();
@@ -84,53 +86,22 @@ class _MapScreenState extends State<MapScreen> {
 
   void _onMapCreated(GoogleMapController controller) {
     _mapController = controller;
-
-    setState(() {
-      _markers = predefinedLocations.map((latLng) {
-        return Marker(
-          markerId: MarkerId(latLng.toString()),
-          position: latLng,
-          infoWindow: InfoWindow(
-            title: "Marker at (${latLng.latitude}, ${latLng.longitude})",
-            snippet: "Lat: ${latLng.latitude}, Lng: ${latLng.longitude}",
-          ),
-        );
-      }).toList();
-
-      _circles = predefinedLocations.map((latLng) {
-        return Circle(
-          circleId: CircleId(latLng.toString()),
-          center: latLng,
-          radius: 5000,
-          strokeWidth: 2,
-          strokeColor: Colors.blue,
-          fillColor: Colors.blue.withOpacity(0.2),
-        );
-      }).toSet();
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Google Maps (Live Tracking)',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: Text('Live Route Tracking',
+            style: TextStyle(fontWeight: FontWeight.bold)),
       ),
       body: _currentLatLng != null
           ? GoogleMap(
               onMapCreated: _onMapCreated,
               initialCameraPosition: CameraPosition(
-                target: predefinedLocations.isNotEmpty
-                    ? predefinedLocations[0]
-                    : LatLng(9.9975, 73.7898),
-                // target: _currentLatLng ?? LatLng(9.9975, 73.7898),
-                zoom: 13,
+                target: _currentLatLng!,
+                zoom: 15,
               ),
-              markers: Set<Marker>.of(_markers),
-              circles: _circles,
               polylines: _polylines,
               myLocationEnabled: true,
               myLocationButtonEnabled: true,
