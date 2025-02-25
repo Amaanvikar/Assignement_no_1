@@ -1,5 +1,6 @@
 import 'package:assignment/auth/login_page.dart';
 import 'package:assignment/listing/screens/map_screen.dart';
+import 'package:assignment/listing/screens/video_compressed_screen.dart';
 import 'package:assignment/models/service_request_models.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -58,6 +59,17 @@ class _DrawerWidgetState extends State<DrawerWidget> {
             onTap: () {
               Navigator.push(context,
                   MaterialPageRoute(builder: (context) => MapScreen()));
+            },
+          ),
+          ListTile(
+            title: Text('Video Compress'),
+            onTap: () {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => VideoCompressedScreen(
+                            videoUrl: '',
+                          )));
             },
           ),
           const Spacer(),
