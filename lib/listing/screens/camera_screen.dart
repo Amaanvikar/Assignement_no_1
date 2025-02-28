@@ -14,7 +14,10 @@ class _CameraScreenState extends State<CameraScreen> {
   final ImagePicker _picker = ImagePicker();
   VideoPlayerController? _videoController;
 
-  // Method to pick an image or video
+  // Variable to store saved media path
+  String? _savedMediaPath;
+
+  // Method to pick media from camera or gallery
   Future<void> _pickMedia(ImageSource source, {required bool isVideo}) async {
     try {
       final XFile? pickedFile = isVideo
@@ -27,6 +30,7 @@ class _CameraScreenState extends State<CameraScreen> {
           _isVideo = isVideo;
         });
 
+        // Initialize video player if it's a video
         if (isVideo) {
           _initializeVideoPlayer(pickedFile.path);
         }
@@ -40,7 +44,7 @@ class _CameraScreenState extends State<CameraScreen> {
     }
   }
 
-  // Initialize video player
+  // Method to initialize video player for playing videos
   void _initializeVideoPlayer(String videoPath) {
     _videoController?.dispose();
     _videoController = VideoPlayerController.file(File(videoPath))
@@ -50,7 +54,16 @@ class _CameraScreenState extends State<CameraScreen> {
       });
   }
 
-  // Show media picker dialog
+  // Method to save media path (this can be used for API calls)
+  void _saveMediaPath() {
+    setState(() {
+      _savedMediaPath = _mediaPath;
+    });
+    // You can now use `_savedMediaPath` for API calls
+    print("Saved Media Path: $_savedMediaPath");
+  }
+
+  // Show bottom sheet dialog for media selection (image or video)
   void _showMediaPickerDialog() {
     showModalBottomSheet(
       context: context,
@@ -155,6 +168,21 @@ class _CameraScreenState extends State<CameraScreen> {
                     icon: const Icon(Icons.add_a_photo),
                     label: const Text('Add Media'),
                   ),
+            // Save button to store media path for later use
+            if (_mediaPath != null)
+              ElevatedButton(
+                onPressed: _saveMediaPath,
+                child: const Text('Save Media Path'),
+              ),
+            // Display the saved media path
+            if (_savedMediaPath != null)
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  'Saved Media Path: $_savedMediaPath',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
           ],
         ),
       ),
