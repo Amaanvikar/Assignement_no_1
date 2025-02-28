@@ -1,4 +1,5 @@
 import 'package:assignment/auth/login_page.dart';
+import 'package:assignment/listing/screens/camera_screen.dart';
 import 'package:assignment/listing/screens/map_screen.dart';
 import 'package:assignment/listing/screens/video_compressed_screen.dart';
 import 'package:assignment/models/service_request_models.dart';
@@ -72,6 +73,12 @@ class _DrawerWidgetState extends State<DrawerWidget> {
                           )));
             },
           ),
+          ListTile(
+              title: Text('Camera Screen'),
+              onTap: () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => CameraScreen()));
+              }),
           const Spacer(),
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),

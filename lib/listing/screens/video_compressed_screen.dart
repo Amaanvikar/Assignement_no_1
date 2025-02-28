@@ -54,7 +54,7 @@ class _VideoCompressedScreenState extends State<VideoCompressedScreen> {
             videoController?.play();
           });
       });
-      // print('Video Path: ${_videoFile!.path}');
+      print('Video Path: ${_videoFile!.path}');
       await _compressVideo(_videoFile!);
     } else {
       print('No video selected');
