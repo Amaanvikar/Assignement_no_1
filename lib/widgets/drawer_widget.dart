@@ -3,6 +3,7 @@ import 'package:assignment/listing/screens/camera_screen.dart';
 import 'package:assignment/listing/screens/map_screen.dart';
 import 'package:assignment/listing/screens/video_compressed_screen.dart';
 import 'package:assignment/models/service_request_models.dart';
+import 'package:assignment/pagination/screens/pagination_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -32,7 +33,10 @@ class _DrawerWidgetState extends State<DrawerWidget> {
     });
   }
 
-  void logout(BuildContext context) {
+  void logout(BuildContext context) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => LoginPage()),
@@ -54,6 +58,16 @@ class _DrawerWidgetState extends State<DrawerWidget> {
             accountEmail: const Text("user@example.com"),
           ),
           ListTile(
+              leading: const Icon(Icons.pageview_outlined),
+              title: Text('Pagination'),
+              onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PaginationScreen(),
+                    ),
+                  )),
+          ListTile(
+            leading: const Icon(Icons.location_on_outlined),
             title: Text(
               'Location',
             ),
@@ -63,6 +77,7 @@ class _DrawerWidgetState extends State<DrawerWidget> {
             },
           ),
           ListTile(
+            leading: const Icon(Icons.video_settings_rounded),
             title: Text('Video Compress'),
             onTap: () {
               Navigator.push(
@@ -74,6 +89,7 @@ class _DrawerWidgetState extends State<DrawerWidget> {
             },
           ),
           ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
               title: Text('Camera Screen'),
               onTap: () {
                 Navigator.push(context,

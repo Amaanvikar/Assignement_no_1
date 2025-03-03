@@ -69,6 +69,10 @@ class _LoginPageState extends State<LoginPage> {
 
         await keyService.storeValue("login_data", jsonEncode(userData));
         await keyService.storebool("isLoggedIn", true);
+
+        // store user name and email in sharedpreference
+        await saveUserSession(data["UserName"], data["EmailID"]);
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Login successful!')),
         );

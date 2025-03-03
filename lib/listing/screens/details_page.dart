@@ -90,6 +90,8 @@ class _DetailsPageState extends State<DetailsPage> {
     }
   }
 
+  // select image from local storage and stored it using sqflite and display in ui
+
   Future<void> _loadStoredImage() async {
     final databaseService = DatabaseService.instance;
 

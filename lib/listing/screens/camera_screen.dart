@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:video_player/video_player.dart';
 
 class CameraScreen extends StatefulWidget {
   @override
@@ -9,33 +8,46 @@ class CameraScreen extends StatefulWidget {
 }
 
 class _CameraScreenState extends State<CameraScreen> {
-  String? _mediaPath;
-  bool _isVideo = false;
   final ImagePicker _picker = ImagePicker();
-  VideoPlayerController? _videoController;
+  List<Map<String, dynamic>> _mediaList = [];
 
-  // Variable to store saved media path
-  String? _savedMediaPath;
-
-  // Method to pick media from camera or gallery
   Future<void> _pickMedia(ImageSource source, {required bool isVideo}) async {
     try {
-      final XFile? pickedFile = isVideo
-          ? await _picker.pickVideo(source: source)
-          : await _picker.pickImage(source: source);
-
-      if (pickedFile != null) {
-        setState(() {
-          _mediaPath = pickedFile.path;
-          _isVideo = isVideo;
-        });
-
-        // Initialize video player if it's a video
-        if (isVideo) {
-          _initializeVideoPlayer(pickedFile.path);
+      if (isVideo) {
+        final XFile? pickedVideo = await _picker.pickVideo(source: source);
+        if (pickedVideo != null) {
+          setState(() {
+            _mediaList.add({"path": pickedVideo.path, "isVideo": true});
+          });
         }
+      } else {
+        if (source == ImageSource.camera) {
+          List<Map<String, dynamic>> capturedImages = [];
+          bool takeMorePhotos = true;
 
-        print("Picked Media Path: $_mediaPath");
+          while (takeMorePhotos) {
+            final XFile? pickedImage =
+                await _picker.pickImage(source: ImageSource.camera);
+            if (pickedImage != null) {
+              capturedImages.add({"path": pickedImage.path, "isVideo": false});
+            }
+
+            takeMorePhotos = await _showContinueDialog();
+          }
+
+          setState(() {
+            _mediaList.addAll(capturedImages);
+          });
+        } else {
+          final List<XFile>? pickedImages = await _picker.pickMultiImage();
+          if (pickedImages != null) {
+            setState(() {
+              _mediaList.addAll(pickedImages
+                  .map((image) => {"path": image.path, "isVideo": false})
+                  .toList());
+            });
+          }
+        }
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -44,26 +56,27 @@ class _CameraScreenState extends State<CameraScreen> {
     }
   }
 
-  // Method to initialize video player for playing videos
-  void _initializeVideoPlayer(String videoPath) {
-    _videoController?.dispose();
-    _videoController = VideoPlayerController.file(File(videoPath))
-      ..initialize().then((_) {
-        setState(() {});
-        _videoController!.play();
-      });
+  Future<bool> _showContinueDialog() async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text("Take Another Photo?"),
+            content: Text("Do you want to capture another image?"),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text("No"),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text("Yes"),
+              ),
+            ],
+          ),
+        ) ??
+        false;
   }
 
-  // Method to save media path (this can be used for API calls)
-  void _saveMediaPath() {
-    setState(() {
-      _savedMediaPath = _mediaPath;
-    });
-    // You can now use `_savedMediaPath` for API calls
-    print("Saved Media Path: $_savedMediaPath");
-  }
-
-  // Show bottom sheet dialog for media selection (image or video)
   void _showMediaPickerDialog() {
     showModalBottomSheet(
       context: context,
@@ -77,7 +90,7 @@ class _CameraScreenState extends State<CameraScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.camera_alt, color: Colors.blue),
+                leading: const Icon(Icons.image, color: Colors.blue),
                 title: const Text('Take Photo'),
                 onTap: () {
                   Navigator.pop(context);
@@ -86,14 +99,14 @@ class _CameraScreenState extends State<CameraScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.image, color: Colors.green),
-                title: const Text('Choose Image from Gallery'),
+                title: const Text('Choose Images from Gallery'),
                 onTap: () {
                   Navigator.pop(context);
                   _pickMedia(ImageSource.gallery, isVideo: false);
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.videocam, color: Colors.red),
+                leading: const Icon(Icons.image, color: Colors.red),
                 title: const Text('Record Video'),
                 onTap: () {
                   Navigator.pop(context);
@@ -101,7 +114,7 @@ class _CameraScreenState extends State<CameraScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.video_library, color: Colors.purple),
+                leading: Icon(Icons.image, color: Colors.purple),
                 title: const Text('Choose Video from Gallery'),
                 onTap: () {
                   Navigator.pop(context);
@@ -116,75 +129,34 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 
   @override
-  void dispose() {
-    _videoController?.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Camera & Video Screen")),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _mediaPath != null
-                ? _isVideo
-                    ? _videoController != null &&
-                            _videoController!.value.isInitialized
-                        ? Column(
-                            children: [
-                              AspectRatio(
-                                aspectRatio:
-                                    _videoController!.value.aspectRatio,
-                                child: VideoPlayer(_videoController!),
-                              ),
-                              IconButton(
-                                icon: Icon(
-                                  _videoController!.value.isPlaying
-                                      ? Icons.pause
-                                      : Icons.play_arrow,
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    _videoController!.value.isPlaying
-                                        ? _videoController!.pause()
-                                        : _videoController!.play();
-                                  });
-                                },
-                              ),
-                            ],
-                          )
-                        : const CircularProgressIndicator()
-                    : Image.file(
-                        File(_mediaPath!),
-                        width: 200,
-                        height: 200,
-                        fit: BoxFit.cover,
-                      )
-                : ElevatedButton.icon(
-                    onPressed: _showMediaPickerDialog,
-                    icon: const Icon(Icons.add_a_photo),
-                    label: const Text('Add Media'),
+      appBar: AppBar(title: const Text("Camera & Media Picker")),
+      body: Column(
+        children: [
+          ElevatedButton.icon(
+            onPressed: _showMediaPickerDialog,
+            icon: const Icon(Icons.add_a_photo),
+            label: const Text('Add Media'),
+          ),
+          Expanded(
+            child: _mediaList.isEmpty
+                ? Center(child: Text("No media selected"))
+                : ListView.builder(
+                    itemCount: _mediaList.length,
+                    itemBuilder: (context, index) {
+                      final media = _mediaList[index];
+                      return ListTile(
+                        leading: media["isVideo"]
+                            ? Icon(Icons.videocam, color: Colors.red)
+                            : Image.file(File(media["path"]),
+                                width: 50, height: 50, fit: BoxFit.cover),
+                        title: Text(media["path"]),
+                      );
+                    },
                   ),
-            // Save button to store media path for later use
-            if (_mediaPath != null)
-              ElevatedButton(
-                onPressed: _saveMediaPath,
-                child: const Text('Save Media Path'),
-              ),
-            // Display the saved media path
-            if (_savedMediaPath != null)
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text(
-                  'Saved Media Path: $_savedMediaPath',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
