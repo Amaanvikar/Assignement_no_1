@@ -1,3 +1,7 @@
+import 'dart:async';
+
+import 'package:assignment/models/lat_lng_models.dart';
+import 'package:assignment/storage/location_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
@@ -15,6 +19,7 @@ class _MapScreenState extends State<MapScreen> {
   LatLng? _currentLatLng;
   List<LatLng> _polylineCoordinates = [];
   Set<Polyline> _polylines = {};
+  late Timer _locationTimer;
 
   @override
   void initState() {
@@ -36,6 +41,14 @@ class _MapScreenState extends State<MapScreen> {
         _startTracking(
             LatLng(initialLocation.latitude!, initialLocation.longitude!));
       }
+
+      _locationTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+        if (_currentLatLng != null) {
+          print(
+              'Lat: ${_currentLatLng!.latitude}, Lng: ${_currentLatLng!.longitude}');
+          _saveLocationData(_currentLatLng!);
+        }
+      });
 
       _location.onLocationChanged.listen((LocationData newLocation) {
         if (newLocation.latitude != null && newLocation.longitude != null) {
@@ -64,7 +77,7 @@ class _MapScreenState extends State<MapScreen> {
       _updatePolylines();
     });
 
-    if (_mapController != null) {
+    if (_mapController != null && _currentLatLng != null) {
       _mapController!.animateCamera(CameraUpdate.newLatLng(_currentLatLng!));
     }
   }
@@ -82,6 +95,20 @@ class _MapScreenState extends State<MapScreen> {
         ),
       );
     });
+  }
+
+  void _saveLocationData(LatLng latLng) async {
+    DateTime now = DateTime.now();
+    LocationPoint newLocation = LocationPoint(
+      latitude: latLng.latitude,
+      longitude: latLng.longitude,
+      timestamp: now,
+    );
+
+    List<LocationPoint> storedLocations =
+        await LocationStorage.fetchLocations();
+    storedLocations.add(newLocation);
+    await LocationStorage.saveLocation(storedLocations);
   }
 
   void _onMapCreated(GoogleMapController controller) {
