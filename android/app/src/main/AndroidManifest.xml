@@ -7,6 +7,9 @@
 
         <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
         <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+        <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+        <uses-permission android:name="android.permission.WAKE_LOCK"/>
+        <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 
 
     <application
@@ -18,7 +21,12 @@
         <meta-data android:name="com.google.android.geo.API_KEY"
                android:value="AIzaSyCObi-eSXPyzGBVR9yQMabvA_lIruPYm8A"/>
 
-
+        <service
+            android:name="yukams.app.background_locator_2.IsolateHolderService"
+            android:permission="android.permission.FOREGROUND_SERVICE"
+            android:exported="true"
+            android:foregroundServiceType = "location"
+        />
         <activity
             android:name=".MainActivity"
             android:exported="true"

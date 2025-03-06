@@ -42,16 +42,21 @@ class _MapScreenState extends State<MapScreen> {
             LatLng(initialLocation.latitude!, initialLocation.longitude!));
       }
 
-      _locationTimer = Timer.periodic(Duration(seconds: 1), (timer) {
-        if (_currentLatLng != null) {
-          print(
-              'Lat: ${_currentLatLng!.latitude}, Lng: ${_currentLatLng!.longitude}');
-          _saveLocationData(_currentLatLng!);
-        }
-      });
+      // Enables background tracking the app recieves countinue updates even when it is in background
+      _location.enableBackgroundMode(enable: true);
+
+      //       _locationTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      //   if (_currentLatLng != null) {
+      //     print(
+      //         'Lat: ${_currentLatLng!.latitude}, Lng: ${_currentLatLng!.longitude}');
+      //     _saveLocationData(_currentLatLng!);
+      //   }
+      // });
 
       _location.onLocationChanged.listen((LocationData newLocation) {
         if (newLocation.latitude != null && newLocation.longitude != null) {
+          print(
+              "Location Updated: ${newLocation.latitude}, ${newLocation.longitude}");
           _updatePosition(
               LatLng(newLocation.latitude!, newLocation.longitude!));
         }

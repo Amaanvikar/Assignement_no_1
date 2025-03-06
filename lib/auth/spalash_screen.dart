@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:assignment/auth/login_page.dart';
 import 'package:assignment/listing/screens/fetch_data_screen.dart';
-import 'package:assignment/pagination/screens/pagination_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
