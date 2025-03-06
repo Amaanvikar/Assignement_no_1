@@ -1,6 +1,7 @@
 import 'package:assignment/auth/login_page.dart';
 import 'package:assignment/listing/screens/camera_screen.dart';
 import 'package:assignment/listing/screens/map_screen.dart';
+import 'package:assignment/listing/screens/submit_form_page.dart';
 import 'package:assignment/listing/screens/video_compressed_screen.dart';
 import 'package:assignment/models/service_request_models.dart';
 import 'package:assignment/pagination/screens/pagination_screen.dart';
@@ -94,6 +95,14 @@ class _DrawerWidgetState extends State<DrawerWidget> {
               onTap: () {
                 Navigator.push(context,
                     MaterialPageRoute(builder: (context) => CameraScreen()));
+              }),
+          ListTile(
+              leading: const Icon(
+                  Icons.signal_wifi_statusbar_connected_no_internet_4_outlined),
+              title: Text('Check Connectivity'),
+              onTap: () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => SubmitFormPage()));
               }),
           const Spacer(),
           ListTile(
