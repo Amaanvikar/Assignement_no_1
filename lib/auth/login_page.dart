@@ -16,6 +16,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController usernameController = TextEditingController();
   bool isLoading = false;
   String errorMessage = '';
+  bool isSuccess = true;
 
   final String apiUrl =
       "https://epoweroluat.mahindra.com/PowerolMWS/PowerolDMS_MWS.asmx/LoginCheck";
@@ -23,7 +24,8 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> login() async {
     setState(() {
       isLoading = true;
-      errorMessage = '';
+      errorMessage = 'incorrect login or Password';
+      isSuccess = true;
     });
 
     String loginId = loginIdController.text.trim();
@@ -106,7 +108,9 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(title: const Text('Login')),
+      appBar: AppBar(
+          title: const Text('Login',
+              style: TextStyle(fontWeight: FontWeight.bold))),
       body: Center(
         child: Card(
           elevation: 5,

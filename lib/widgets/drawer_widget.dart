@@ -4,6 +4,7 @@ import 'package:assignment/listing/screens/map_screen.dart';
 import 'package:assignment/listing/screens/submit_form_page.dart';
 import 'package:assignment/listing/screens/video_compressed_screen.dart';
 import 'package:assignment/models/service_request_models.dart';
+import 'package:assignment/models/test_model.dart';
 import 'package:assignment/pagination/screens/pagination_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -103,6 +104,13 @@ class _DrawerWidgetState extends State<DrawerWidget> {
               onTap: () {
                 Navigator.push(context,
                     MaterialPageRoute(builder: (context) => SubmitFormPage()));
+              }),
+          ListTile(
+              leading: const Icon(Icons.api_outlined),
+              title: Text('Check Connectivity'),
+              onTap: () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => ApiTestPage()));
               }),
           const Spacer(),
           ListTile(
